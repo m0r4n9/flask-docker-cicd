@@ -1,0 +1,23 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Установка зависимостей для wait-for-it
+RUN apt-get update && apt-get install -y netcat-openbsd
+
+# Копирование и установка зависимостей
+COPY requirements.txt requirements.txt
+COPY requirements.test.txt requirements.test.txt
+RUN pip install -r requirements.txt
+RUN pip install -r requirements.test.txt
+
+# Копирование исходного кода и тестов
+COPY app.py .
+COPY tests/ tests/
+
+# Скрипт для ожидания готовности базы данных
+COPY wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /wait-for-it.sh
+
+# Команда по умолчанию
+CMD ["/wait-for-it.sh", "db_test:5432", "--", "pytest", "-v", "tests/"]
